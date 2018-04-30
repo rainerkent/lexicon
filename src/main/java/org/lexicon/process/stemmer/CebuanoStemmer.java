@@ -34,10 +34,10 @@ public class CebuanoStemmer {
 
     @Expose
     private String language;
-    
-    private static Map<String, String> rootCache = new HashMap<>();;
 
-    private CebuanoStemmer() {};
+    private static Map<String, String> rootCache = new HashMap<>();
+
+    private CebuanoStemmer() {}
 
     private static CebuanoStemmer getInstance() {
         if (instance == null) {

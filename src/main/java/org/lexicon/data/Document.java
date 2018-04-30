@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.lexicon.Sentiment;
 import org.lexicon.process.DataProcessor;
+import org.lexicon.util.ProgressBar;
 
 public class Document implements Serializable {
 
@@ -59,6 +60,7 @@ public class Document implements Serializable {
     
     private void generateCache() {
         initializeCache();
+        ProgressBar bar = new ProgressBar(sentences.size());
         for (AnnotatedText sentence : sentences) {
             Sentiment sentiment = sentence.getCategory();
             
@@ -70,6 +72,7 @@ public class Document implements Serializable {
             List<String> words = DataProcessor.preprocess(sentence.getText());
             wordListMapCache.get(sentiment).addAll(words);
             vocabularySetCache.addAll(words);
+            bar.step();
         }
         cacheValid = true;
     }

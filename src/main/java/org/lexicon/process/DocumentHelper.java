@@ -29,7 +29,7 @@ public class DocumentHelper {
     private static final int CATEGORY_COLUMN = 1;
 
     // static members only
-    private DocumentHelper() {};
+    private DocumentHelper() {}
 
     public static Map<Sentiment, List<AnnotatedText>> loadDocument(String fileName) {
         Map<Sentiment, List<AnnotatedText>> document = new HashMap<>();
@@ -58,12 +58,12 @@ public class DocumentHelper {
             return null;
         }
 
-        adjustDocumentSize(document);
+        // adjustDocumentSize(document);
         return document;
     }
 
     /**
-     * @param fileName
+     * @param fileName File path for the Training document
      * @return TrainingDocument or <code>null</code> if fileName is invalid
      */
     public static Document loadTrainingDocument(String fileName) {
@@ -135,14 +135,29 @@ public class DocumentHelper {
         }
 
         int correctPrediction = 0;
+        Map<Sentiment, Integer> correctPredictionMap = new HashMap();
+        correctPredictionMap.put(Sentiment.POSITIVE, 0);
+        correctPredictionMap.put(Sentiment.NEGATIVE, 0);
+        correctPredictionMap.put(Sentiment.NEUTRAL, 0);
+        
+        Map<Sentiment, Integer> totalSentimentMap = new HashMap();
+        totalSentimentMap.put(Sentiment.POSITIVE, 0);
+        totalSentimentMap.put(Sentiment.NEGATIVE, 0);
+        totalSentimentMap.put(Sentiment.NEUTRAL, 0);
+        
         int currentRowNum = 1;
         for (Map.Entry<AnnotatedText, Sentiment> entry : testResult.entrySet()) {
             String sentence = entry.getKey().getText();
             Sentiment classification = entry.getKey().getCategory();
             Sentiment prediction = entry.getValue();
+                        
+			int total = totalSentimentMap.get(classification);
+			totalSentimentMap.put(classification, total + 1);
 
             if (classification == prediction) {
                 correctPrediction++;
+                int count = correctPredictionMap.get(classification);
+                correctPredictionMap.put(classification, count + 1);
             }
 
             // Write values
@@ -154,8 +169,26 @@ public class DocumentHelper {
             currentRowNum++;
         }
 
-        Row currentRow = sheet.createRow(currentRowNum);
+        Row currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Accuracy:");
+        
+        currentRow = sheet.createRow(currentRowNum++);
+        currentRow.createCell(0).setCellValue("Positive:");
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+			(double) correctPredictionMap.get(Sentiment.POSITIVE) / totalSentimentMap.get(Sentiment.POSITIVE) * 100));
+        
+        currentRow = sheet.createRow(currentRowNum++);
+        currentRow.createCell(0).setCellValue("Negative:");
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+			(double) correctPredictionMap.get(Sentiment.NEGATIVE) / totalSentimentMap.get(Sentiment.NEGATIVE) * 100));
+        
+        currentRow = sheet.createRow(currentRowNum++);
+        currentRow.createCell(0).setCellValue("Neutral:");
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+			(double) correctPredictionMap.get(Sentiment.NEUTRAL) / totalSentimentMap.get(Sentiment.NEUTRAL) * 100));
+        
+        currentRow = sheet.createRow(currentRowNum++);
+        currentRow.createCell(0).setCellValue("Total:");
         currentRow.createCell(1).setCellValue(String.format("%.2f%%", (double) correctPrediction / testResult.size() * 100));
 
         return WorkbookUtil.writeWorkbookToFile(resultWb, file);

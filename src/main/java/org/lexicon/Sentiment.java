@@ -6,7 +6,6 @@ public enum Sentiment {
     private String sentiment;
 
     Sentiment(String sentiment) {
-        sentiment = sentiment.toUpperCase();
     }
 
     public static Sentiment getValue(String arg) {

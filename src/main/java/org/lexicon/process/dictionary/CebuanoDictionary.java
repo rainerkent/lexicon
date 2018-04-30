@@ -31,7 +31,7 @@ public class CebuanoDictionary {
         Gson gson = GsonHelper.createGson();
         JsonElement wordsJson = ResourceUtil.parseJson(CEBUANO_ROOTS_JSON);
         roots = gson.fromJson(wordsJson, new TypeToken<Set<String>>() {}.getType());
-    };
+    }
 
     public static boolean isRootWord(String root) {
         CebuanoDictionary instance = getInstance();
@@ -57,12 +57,12 @@ public class CebuanoDictionary {
                 { "diy", "dy" }, { "yig", "yg" } };
 
         Set<String> forms = new HashSet<>();
-        for (int i = 0; i < cases.length; i++) {
-            if (word.contains(cases[i][0])) {
-                forms.add(word.replaceAll(cases[i][0], cases[i][1]));
+        for (String[] aCase : cases) {
+            if (word.contains(aCase[0])) {
+                forms.add(word.replaceAll(aCase[0], aCase[1]));
             }
-            if (word.contains(cases[i][1])) {
-                forms.add(word.replaceAll(cases[i][1], cases[i][0]));
+            if (word.contains(aCase[1])) {
+                forms.add(word.replaceAll(aCase[1], aCase[0]));
             }
         }
 

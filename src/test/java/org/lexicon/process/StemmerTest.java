@@ -1,15 +1,13 @@
 package org.lexicon.process;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
 import org.junit.Test;
 import org.lexicon.process.dictionary.CebuanoDictionary;
 import org.lexicon.process.stemmer.CebuanoStemmer;
 import org.lexicon.process.stemmer.Derivation;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class StemmerTest {
 

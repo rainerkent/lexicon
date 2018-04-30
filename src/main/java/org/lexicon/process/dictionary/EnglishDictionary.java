@@ -12,7 +12,7 @@ import org.lexicon.util.ResourceUtil;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;;
+import com.google.gson.reflect.TypeToken;
 
 public class EnglishDictionary {
 
@@ -24,7 +24,7 @@ public class EnglishDictionary {
         Gson gson = GsonHelper.createGson();
         JsonElement wordsJson = ResourceUtil.parseJson(ENGLISH_WORDS_JSON);
         englishWords = gson.fromJson(wordsJson, new TypeToken<HashSet<String>>() {}.getType());
-    };
+    }
 
     private static EnglishDictionary getInstance() {
         if (instance == null) {
@@ -38,7 +38,7 @@ public class EnglishDictionary {
     }
 
     public static List<String> removeEnglishWords(List<String> wordList) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
 
         for (String word : wordList) {
             if (!isEnglishWord(word)) {

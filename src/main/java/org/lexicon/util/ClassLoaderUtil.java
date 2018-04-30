@@ -36,7 +36,7 @@ public class ClassLoaderUtil {
     public static Iterator<URL> getResources(String resourceName, Class<?> callingClass, boolean aggregate)
             throws IOException {
 
-        AggregateIterator<URL> iterator = new AggregateIterator<URL>();
+        AggregateIterator<URL> iterator = new AggregateIterator<>();
 
         iterator.addEnumeration(Thread.currentThread().getContextClassLoader().getResources(resourceName));
 
@@ -155,7 +155,7 @@ public class ClassLoaderUtil {
         }
     }
 
-    private ClassLoaderUtil() {};
+    private ClassLoaderUtil() {}
 
     /**
      * Aggregates Enumeration instances into one iterator and filters out

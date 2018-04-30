@@ -4,6 +4,7 @@ import static org.lexicon.util.ResourceUtil.TRANSLATIONS_JSON;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -84,7 +85,7 @@ public class LexiconPopulator {
     public static Translation getTranslation(String word, Set<Translation> set) {
         Translation translation = null;
         for (Translation t : set) {
-            if (t.getWord() == word) {
+            if (Objects.equals(t.getWord(), word)) {
                 translation = t;
                 break;
             }
@@ -108,12 +109,10 @@ public class LexiconPopulator {
             for (int i = 0; i < cebuanoWords.size(); i++) {
                 JsonObject jsonObj = cebuanoWords.get(i).getAsJsonObject();
                 String cleanedWord = DataProcessor.clean(jsonObj.get("translation").getAsString());
-                if (cleanedWord != null) {
-                    wordSet.add(new Translation(cleanedWord, jsonObj.get("pos").getAsString()));
-                    Set<String> otherForms = CebuanoDictionary.getOtherForms(cleanedWord);
-                    for (String form : otherForms) {
-                        wordSet.add(new Translation(form, jsonObj.get("pos").getAsString()));
-                    }
+                wordSet.add(new Translation(cleanedWord, jsonObj.get("pos").getAsString()));
+                Set<String> otherForms = CebuanoDictionary.getOtherForms(cleanedWord);
+                for (String form : otherForms) {
+                    wordSet.add(new Translation(form, jsonObj.get("pos").getAsString()));
                 }
             }
         }
@@ -162,7 +161,7 @@ public class LexiconPopulator {
                     copyRow(currentRow, sheetOut.createRow(currentRowOut++));
                     currentRowNum++;
                 }
-                else if (currentWord == currentRowWord) {
+                else if (Objects.equals(currentWord, currentRowWord)) {
                     if (wordStartRow == currentRowNum) {
                         cebuanoWordsToAdd = getTranslations(currentWord);
                     }

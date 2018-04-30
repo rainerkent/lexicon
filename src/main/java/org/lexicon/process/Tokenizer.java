@@ -1,6 +1,7 @@
 package org.lexicon.process;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Tokenizer {
@@ -15,9 +16,7 @@ public class Tokenizer {
 
         // Move strings in Array to List
         List<String> wordList = new ArrayList<>();
-        for (String word : words) {
-            wordList.add(word);
-        }
+        Collections.addAll(wordList, words);
         return wordList;
     }
 

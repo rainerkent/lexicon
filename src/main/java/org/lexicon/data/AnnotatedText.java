@@ -56,16 +56,18 @@ public class AnnotatedText implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        AnnotatedText other = (AnnotatedText) obj;
-        return text.equals(other.text) && category.equals(other.category);
+        if (obj instanceof AnnotatedText) {
+            AnnotatedText other = (AnnotatedText) obj;
+            return text.equals(other.text) && category.equals(other.category);
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        return sb.append("[").append(text).append(": ").append(category).append("]").toString();
+        return "[" + text + ": " + category + "]";
     }
-    
+
     @Override
     public int hashCode() {
         return text.hashCode() + category.hashCode();

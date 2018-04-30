@@ -2,11 +2,7 @@ package org.lexicon;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -99,7 +95,7 @@ public class FeatureSelection {
     public static TreeMap<Integer, List<String>> getTopWords(String lexiconFile, int numOfWords, Sentiment sentiment, boolean removeStopWords) {
         String sentimentStr = sentiment != null ? sentiment.getValue() : "ALL";
         // Key -> word; Value -> count
-        Map<String, Integer> wordCountMap = getDocumentWordCount(lexiconFile, removeStopWords).get(sentimentStr);
+        Map<String, Integer> wordCountMap = Objects.requireNonNull(getDocumentWordCount(lexiconFile, removeStopWords)).get(sentimentStr);
 
         TreeMap<Integer, List<String>> sortedWordsMap = new TreeMap<>();
         TreeMap<Integer, List<String>> topWordsMap = new TreeMap<>();

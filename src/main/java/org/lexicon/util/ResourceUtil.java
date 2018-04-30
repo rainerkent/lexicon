@@ -40,5 +40,5 @@ public class ResourceUtil {
         return result;
     }
 
-    private ResourceUtil() {};
+    private ResourceUtil() {}
 }

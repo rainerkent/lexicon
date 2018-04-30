@@ -8,7 +8,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class WorkbookUtil {
 
     // static methods only
-    private WorkbookUtil() {};
+    private WorkbookUtil() {}
 
     /**
      * @param workbook

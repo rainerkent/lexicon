@@ -9,26 +9,14 @@ import org.lexicon.process.stemmer.CebuanoStemmer;
 public class DataProcessor {
 
     // static methods only
-    private DataProcessor() {};
+    private DataProcessor() {}
 
     public static String clean(String word) {
         return CebuanoNormalizer.normalize(word);
     }
 
-    public static List<String> clean(List<String> sentences) {
-        return null;
-    }
 
-    public static boolean isValidWord(String word) {
-        // TODO: change into one condition
-        return word.matches("\\w") // does not contain whitespaces and special chars
-                && !word.matches(".*\\d.*"); // does not contain numbers
-    }
 
-    public static boolean hasWhitespaces(String str) {
-        return str.matches(".*\\s.*");
-    }
-    
     public static List<String> preprocess(String sentence) {
         return preprocess(sentence, true);
     }
@@ -41,15 +29,15 @@ public class DataProcessor {
 
         List<String> result = new ArrayList<>(50);
         for (String word : wordList) {
-            if (word.matches(".*\\d.*") || EnglishDictionary.isEnglishWord(word)) 
+            if (word.matches(".*\\d.*") || EnglishDictionary.isEnglishWord(word))
                 continue;
-            
+
             word = CebuanoNormalizer.normalize(word);
             word = CebuanoStemmer.getRootWord(word);
-            
+
             if (removeStopWords && StopWords.isStopWord(word))
                 continue;
-            
+
             result.add(word);
         }
         // Remove English words

@@ -18,6 +18,6 @@ public class GsonHelper {
         return mGsonInstance;
     }
 
-    private GsonHelper() {};
+    private GsonHelper() {}
 
 }

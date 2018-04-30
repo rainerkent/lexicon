@@ -1,18 +1,17 @@
 package org.lexicon;
 
-import java.io.IOException;
-import java.util.Map;
-
+import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
 import org.lexicon.process.DocumentHelper;
 
-import com.beust.jcommander.IStringConverter;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+import java.io.IOException;
+import java.util.Map;
 
 public class App {
 
@@ -27,8 +26,15 @@ public class App {
         CommandTest cTest = new CommandTest();
         CommandStats cStats = new CommandStats();
         CommandTopWords cTopWords = new CommandTopWords();
-        JCommander jc = JCommander.newBuilder().addObject(app).addCommand(cTrain).addCommand(cTest).addCommand(cStats)
-                .addCommand(cPopulate).addCommand(cTopWords).build();
+        JCommander jc = JCommander
+            .newBuilder()
+            .addObject(app)
+            .addCommand(cTrain)
+            .addCommand(cTest)
+            .addCommand(cStats)
+            .addCommand(cPopulate)
+            .addCommand(cTopWords)
+            .build();
         jc.parse(args);
 
         if (app.help || jc.getParsedCommand() == null) {
@@ -91,7 +97,7 @@ public class App {
 
         System.out.println("Classifying data...");
         Map<AnnotatedText, Sentiment> testResult = classifier.test(testingDocument);
-        
+
 
         System.out.println("Writing result file...");
         if (DocumentHelper.writeTestResult(testResult, args.resultDocFile)) {

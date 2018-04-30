@@ -38,7 +38,7 @@ public class CebuanoNormalizer {
             result.add(normalize(word));
         }
         return result;
-    };
+    }
 
     public static Set<String> normalize(Set<String> set) {
         Set<String> result = new HashSet<>();

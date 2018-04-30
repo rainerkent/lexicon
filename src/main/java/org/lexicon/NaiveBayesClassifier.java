@@ -16,11 +16,12 @@ import java.util.Set;
 import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
 import org.lexicon.process.DataProcessor;
+import org.lexicon.util.ProgressBar;
 
 public class NaiveBayesClassifier implements Serializable {
 
     private static final long serialVersionUID = 8707384910244268938L;
-    private static final Sentiment[] SENTIMENT_VALUES = { Sentiment.NEGATIVE, Sentiment.NEUTRAL, Sentiment.POSITIVE };
+    private static final Sentiment[] SENTIMENT_VALUES = { Sentiment.NEUTRAL, Sentiment.NEGATIVE, Sentiment.POSITIVE };
 
     public static final String DEFAULT_MODEL_FILE = "./files/classifier.model";
 
@@ -49,7 +50,7 @@ public class NaiveBayesClassifier implements Serializable {
     }
 
     public static NaiveBayesClassifier loadModel(String file) {
-        NaiveBayesClassifier model = null;
+        NaiveBayesClassifier model;
         try {
             ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
             model = (NaiveBayesClassifier) in.readObject();
@@ -76,10 +77,11 @@ public class NaiveBayesClassifier implements Serializable {
 
     public void train(Document trainingDocument) {
         int docCount = trainingDocument.getData().size();
-        System.out.println("Building vocabulary list... \nThis may take a while...");
+        System.out.println("Building vocabulary list...");
         vocabulary = trainingDocument.getVocabulary();
 
         System.out.println("Building knowledge base...");
+        ProgressBar bar = new ProgressBar(vocabulary.size() * SENTIMENT_VALUES.length);
         for (Sentiment sentiment : SENTIMENT_VALUES) {
             int docCountForClass = trainingDocument.getSentenceCountMap().get(sentiment);
             double prior = (double) docCountForClass / docCount;
@@ -90,6 +92,7 @@ public class NaiveBayesClassifier implements Serializable {
                 int wordCount = countWord(wordsForClass, word);
                 double condProb = ((double) wordCount + 1) / (wordsForClass.size() + vocabulary.size());
                 condProbMap.put(new AnnotatedText(word, sentiment), condProb);
+                bar.step();
             }
         }
     }
@@ -120,9 +123,11 @@ public class NaiveBayesClassifier implements Serializable {
 
     public Map<AnnotatedText, Sentiment> test(Document testDocument) {
         Map<AnnotatedText, Sentiment> result = new LinkedHashMap<>();
+        ProgressBar bar = new ProgressBar(testDocument.getData().size());
         for (AnnotatedText sentence : testDocument.getData()) {
             Sentiment prediction = predict(sentence.getText());
             result.put(sentence, prediction);
+            bar.step();
         }
         return result;
     }
