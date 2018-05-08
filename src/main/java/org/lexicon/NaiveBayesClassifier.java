@@ -21,19 +21,18 @@ import org.lexicon.util.ProgressBar;
 public class NaiveBayesClassifier implements Serializable {
 
     private static final long serialVersionUID = 8707384910244268938L;
-    private static final Sentiment[] SENTIMENT_VALUES = { Sentiment.NEUTRAL, Sentiment.NEGATIVE, Sentiment.POSITIVE };
 
     public static final String DEFAULT_MODEL_FILE = "./files/classifier.model";
 
     private Map<Sentiment, Double> priorMap;
 
-    private Map<AnnotatedText, Double> condProbMap;
+    private Map<AnnotatedText, Double> likelihoodMap;
 
     private Set<String> vocabulary;
 
     public NaiveBayesClassifier() {
         priorMap = new HashMap<>();
-        condProbMap = new HashMap<>();
+        likelihoodMap = new HashMap<>();
         vocabulary = new HashSet<>();
     }
 
@@ -41,8 +40,8 @@ public class NaiveBayesClassifier implements Serializable {
         return priorMap;
     }
 
-    public Map<AnnotatedText, Double> getCondProbMap() {
-        return condProbMap;
+    public Map<AnnotatedText, Double> getLikelihoodMap() {
+        return likelihoodMap;
     }
 
     public Set<String> getVocabulary() {
@@ -75,26 +74,154 @@ public class NaiveBayesClassifier implements Serializable {
         return true;
     }
 
-    public void train(Document trainingDocument) {
+    public void train(Document trainingDocument, ExtractionScheme featureMethod) {
         int docCount = trainingDocument.getData().size();
         System.out.println("Building vocabulary list...");
         vocabulary = trainingDocument.getVocabulary();
 
         System.out.println("Building knowledge base...");
-        ProgressBar bar = new ProgressBar(vocabulary.size() * SENTIMENT_VALUES.length);
-        for (Sentiment sentiment : SENTIMENT_VALUES) {
+        for (Sentiment sentiment : Sentiment.values()) {
             int docCountForClass = trainingDocument.getSentenceCountMap().get(sentiment);
             double prior = (double) docCountForClass / docCount;
             priorMap.put(sentiment, prior);
+        }
 
-            List<String> wordsForClass = trainingDocument.getWordListMap().get(sentiment);
-            for (String word : vocabulary) {
-                int wordCount = countWord(wordsForClass, word);
-                double condProb = ((double) wordCount + 1) / (wordsForClass.size() + vocabulary.size());
-                condProbMap.put(new AnnotatedText(word, sentiment), condProb);
-                bar.step();
+        if (featureMethod == ExtractionScheme.TO) {
+            ProgressBar bar = new ProgressBar(vocabulary.size() * Sentiment.values().length);
+
+            for (Sentiment sentiment : Sentiment.values()) {
+                List<String> wordsByClass = trainingDocument.getWordListMap().get(sentiment);
+                for (String word : vocabulary) {
+                    int wordCount = countWord(wordsByClass, word);
+                    double condProb = calculateCondProb(wordCount, wordsByClass.size());
+                    likelihoodMap.put(new AnnotatedText(word, sentiment), condProb);
+                    bar.step();
+                }
             }
         }
+        else if (featureMethod == ExtractionScheme.TF) {
+            ProgressBar bar = new ProgressBar(vocabulary.size() * Sentiment.values().length + trainingDocument.getData().size());
+
+            Map<String, Map<Sentiment, Double>> tfBySentimentMap = new HashMap<>();
+            Map<Sentiment, Double> totalTfBySentimentMap = new HashMap<>();
+            totalTfBySentimentMap.put(Sentiment.POSITIVE, 0.0);
+            totalTfBySentimentMap.put(Sentiment.NEGATIVE, 0.0);
+            totalTfBySentimentMap.put(Sentiment.NEUTRAL, 0.0);
+            for (AnnotatedText text : trainingDocument.getData()) {
+                List<String> words = DataProcessor.preprocess(text.getText(), true);
+                Set<String> uniqueWords = new HashSet<>(words);
+                Sentiment sentiment = text.getCategory();
+
+                for (String word : uniqueWords) {
+                    if (!tfBySentimentMap.containsKey(word)) {
+                        Map<Sentiment, Double> tfMap = new HashMap<>();
+                        tfMap.put(Sentiment.POSITIVE, 0.0);
+                        tfMap.put(Sentiment.NEGATIVE, 0.0);
+                        tfMap.put(Sentiment.NEUTRAL, 0.0);
+                        tfBySentimentMap.put(word, tfMap);
+                    }
+
+                    double tf = tfBySentimentMap.get(word).get(sentiment);
+                    tf += calculateTermFrequency(word, words);
+                    // System.out.println(tf);
+                    tfBySentimentMap.get(word).put(sentiment, tf);
+
+                    double totalTf = totalTfBySentimentMap.get(sentiment);
+                    totalTfBySentimentMap.put(sentiment, totalTf + tf);
+                }
+                bar.step();
+            }
+            for (Sentiment sentiment : Sentiment.values()) {
+                for (String word : vocabulary) {
+                    double wordTf = tfBySentimentMap.get(word).get(sentiment);
+                    double condProb = calculateCondProb(wordTf, totalTfBySentimentMap.get(sentiment));
+                    likelihoodMap.put(new AnnotatedText(word, sentiment), condProb);
+                    bar.step();
+                }
+            }
+        }
+        else if (featureMethod == ExtractionScheme.TFIDF) {
+            ProgressBar bar = new ProgressBar(vocabulary.size() * Sentiment.values().length + trainingDocument.getData().size());
+
+            // Count each word on documents, to be used for getting idf
+            Map<String, Map<Sentiment, Integer>> wordCountBySentimentMap = new HashMap<>();
+            for (AnnotatedText text : trainingDocument.getData()) {
+                List<String> words = DataProcessor.preprocess(text.getText(), true);
+                Set<String> uniqueWords = new HashSet<>(words);
+                Sentiment sentiment = text.getCategory();
+
+                for (String word : uniqueWords) {
+                    if (!wordCountBySentimentMap.containsKey(word)) {
+                        Map<Sentiment, Integer> countMap = new HashMap<>();
+                        countMap.put(Sentiment.POSITIVE, 0);
+                        countMap.put(Sentiment.NEGATIVE, 0);
+                        countMap.put(Sentiment.NEUTRAL, 0);
+                        wordCountBySentimentMap.put(word, countMap);
+                    }
+
+                    int count = wordCountBySentimentMap.get(word).get(sentiment) + 1;
+                    wordCountBySentimentMap.get(word).put(sentiment, count);
+                }
+            }
+
+            // Get total TF-IDFs for word and for class
+            Map<String, Map<Sentiment, Double>> totalTfidfByWordMap = new HashMap<>();
+            Map<Sentiment, Double> totalTfidfBySentimentMap = new HashMap<>();
+            totalTfidfBySentimentMap.put(Sentiment.POSITIVE, 0.0);
+            totalTfidfBySentimentMap.put(Sentiment.NEGATIVE, 0.0);
+            totalTfidfBySentimentMap.put(Sentiment.NEUTRAL, 0.0);
+            for (AnnotatedText text : trainingDocument.getData()) {
+                List<String> words = DataProcessor.preprocess(text.getText(), true);
+                Set<String> uniqueWords = new HashSet<>(words);
+                Sentiment sentiment = text.getCategory();
+
+                for (String word : uniqueWords) {
+                    if (!totalTfidfByWordMap.containsKey(word)) {
+                        Map<Sentiment, Double> tfidfMap = new HashMap<>();
+                        tfidfMap.put(Sentiment.POSITIVE, 0.0);
+                        tfidfMap.put(Sentiment.NEGATIVE, 0.0);
+                        tfidfMap.put(Sentiment.NEUTRAL, 0.0);
+                        totalTfidfByWordMap.put(word, tfidfMap);
+                    }
+                    int sentenceCountInClass = trainingDocument.getSentenceCountMap().get(sentiment);
+
+                    double tfidf = totalTfidfByWordMap.get(word).get(sentiment);
+                    tfidf += calculateTermFrequency(word, words) * calculateIDF(sentenceCountInClass, wordCountBySentimentMap.get(word).get(sentiment));
+                    // System.out.println(tf);
+                    totalTfidfByWordMap.get(word).put(sentiment, tfidf);
+
+                    double totalTfidf = (double) totalTfidfBySentimentMap.get(sentiment);
+                    totalTfidfBySentimentMap.put(sentiment, totalTfidf + tfidf);
+                }
+                bar.step();
+            }
+            for (Sentiment sentiment : Sentiment.values()) {
+                for (String word : vocabulary) {
+                    double wordTf = totalTfidfByWordMap.get(word).get(sentiment);
+                    double condProb = calculateCondProb(wordTf, totalTfidfBySentimentMap.get(sentiment));
+                    likelihoodMap.put(new AnnotatedText(word, sentiment), condProb);
+                    bar.step();
+                }
+            }
+        }
+    }
+
+    private double calculateTermFrequency(String word, List<String> document) {
+        int termCount = 0;
+        for (String term : document) {
+            if (word.equals(term)) {
+                termCount++;
+            }
+        }
+        return (double) (termCount + 1) / document.size();
+    }
+
+    private double calculateIDF(int documentSize, int termCount ) {
+        return Math.log((double) documentSize / termCount);
+    }
+
+    private double calculateCondProb(double wordCount, double wordsByClassCount) {
+        return Math.log((wordCount + 1) / (wordsByClassCount + vocabulary.size()));
     }
 
     public Sentiment predict(String sentence) {
@@ -103,12 +230,12 @@ public class NaiveBayesClassifier implements Serializable {
         Sentiment maxSentiment = null;
         double maxScore = Double.NEGATIVE_INFINITY;
 
-        for (Sentiment sentiment : SENTIMENT_VALUES) {
+        for (Sentiment sentiment : Sentiment.values()) {
             double score = Math.log(priorMap.get(sentiment));
             for (String token : tokens) {
                 if (vocabulary.contains(token)) {
-                    Double condProb = condProbMap.get(new AnnotatedText(token, sentiment));
-                    score += Math.log(condProb);
+                    Double likelihood = likelihoodMap.get(new AnnotatedText(token, sentiment));
+                    score += likelihood;
                 }
             }
 

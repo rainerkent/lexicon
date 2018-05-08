@@ -1,7 +1,7 @@
 package org.lexicon;
 
 public enum Sentiment {
-    NEGATIVE("NEGATIVE"), NEUTRAL("NEUTRAL"), POSITIVE("POSITIVE");
+     POSITIVE("POSITIVE"), NEGATIVE("NEGATIVE"), NEUTRAL("NEUTRAL");
 
     private String sentiment;
 

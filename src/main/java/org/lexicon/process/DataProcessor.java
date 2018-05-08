@@ -15,8 +15,6 @@ public class DataProcessor {
         return CebuanoNormalizer.normalize(word);
     }
 
-
-
     public static List<String> preprocess(String sentence) {
         return preprocess(sentence, true);
     }
@@ -33,7 +31,7 @@ public class DataProcessor {
                 continue;
 
             word = CebuanoNormalizer.normalize(word);
-            word = CebuanoStemmer.getRootWord(word);
+            // word = CebuanoStemmer.getRootWord(word);
 
             if (removeStopWords && StopWords.isStopWord(word))
                 continue;

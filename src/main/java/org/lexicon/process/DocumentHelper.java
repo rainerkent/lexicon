@@ -47,6 +47,7 @@ public class DocumentHelper {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) { // Assume row0 is header
                 Row currentRow = sheet.getRow(i);
                 if (currentRow != null) {
+                    // System.out.println(i);
                     String sentence = formatter.formatCellValue(currentRow.getCell(SENTENCE_COLUMN));
                     Sentiment sentiment = Sentiment
                             .getValue(formatter.formatCellValue(currentRow.getCell(CATEGORY_COLUMN)));
@@ -106,6 +107,7 @@ public class DocumentHelper {
     /**
      * Trims the size of the documents if there are size inequalities
      */
+    @SuppressWarnings("unused")
     private static void adjustDocumentSize(Map<Sentiment, List<AnnotatedText>> document) {
         // Get the minimum size for the three categories
         int minSize = Integer.MAX_VALUE;
@@ -135,24 +137,24 @@ public class DocumentHelper {
         }
 
         int correctPrediction = 0;
-        Map<Sentiment, Integer> correctPredictionMap = new HashMap();
+        Map<Sentiment, Integer> correctPredictionMap = new HashMap<>();
         correctPredictionMap.put(Sentiment.POSITIVE, 0);
         correctPredictionMap.put(Sentiment.NEGATIVE, 0);
         correctPredictionMap.put(Sentiment.NEUTRAL, 0);
-        
-        Map<Sentiment, Integer> totalSentimentMap = new HashMap();
+
+        Map<Sentiment, Integer> totalSentimentMap = new HashMap<>();
         totalSentimentMap.put(Sentiment.POSITIVE, 0);
         totalSentimentMap.put(Sentiment.NEGATIVE, 0);
         totalSentimentMap.put(Sentiment.NEUTRAL, 0);
-        
+
         int currentRowNum = 1;
         for (Map.Entry<AnnotatedText, Sentiment> entry : testResult.entrySet()) {
             String sentence = entry.getKey().getText();
             Sentiment classification = entry.getKey().getCategory();
             Sentiment prediction = entry.getValue();
-                        
-			int total = totalSentimentMap.get(classification);
-			totalSentimentMap.put(classification, total + 1);
+
+            int total = totalSentimentMap.get(classification);
+            totalSentimentMap.put(classification, total + 1);
 
             if (classification == prediction) {
                 correctPrediction++;
@@ -171,22 +173,22 @@ public class DocumentHelper {
 
         Row currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Accuracy:");
-        
+
         currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Positive:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
 			(double) correctPredictionMap.get(Sentiment.POSITIVE) / totalSentimentMap.get(Sentiment.POSITIVE) * 100));
-        
+
         currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Negative:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
 			(double) correctPredictionMap.get(Sentiment.NEGATIVE) / totalSentimentMap.get(Sentiment.NEGATIVE) * 100));
-        
+
         currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Neutral:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%", 
+        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
 			(double) correctPredictionMap.get(Sentiment.NEUTRAL) / totalSentimentMap.get(Sentiment.NEUTRAL) * 100));
-        
+
         currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Total:");
         currentRow.createCell(1).setCellValue(String.format("%.2f%%", (double) correctPrediction / testResult.size() * 100));

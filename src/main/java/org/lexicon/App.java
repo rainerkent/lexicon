@@ -1,6 +1,5 @@
 package org.lexicon;
 
-import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -20,6 +19,7 @@ public class App {
 
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
+
         App app = new App();
         CommandPopulate cPopulate = new CommandPopulate();
         CommandTrain cTrain = new App.CommandTrain();
@@ -57,6 +57,7 @@ public class App {
                 showTopWords(cTopWords);
                 break;
         }
+
         long end = System.currentTimeMillis();
         System.out.println(String.format("Program execution: %.2f secs", (end - start) / 1000.0));
     }
@@ -68,8 +69,10 @@ public class App {
             return;
         }
 
+        BagOfWords bow = new BagOfWords(trainingDocument);
         NaiveBayesClassifier classifier = new NaiveBayesClassifier();
-        classifier.train(trainingDocument);
+        classifier.train(trainingDocument, args.extractionScheme);
+        System.out.println(classifier.getPriorMap());
 
         System.out.println("Saving model file...");
         if (classifier.writeModel(args.modelFile)) {
@@ -77,6 +80,14 @@ public class App {
         }
         else {
             System.err.println("Problem found when writing: " + args.modelFile);
+        }
+
+        System.out.println("Saving bag-of-words file...");
+        if (bow.writeFile(args.bowFile)) {
+            System.out.println("Bag-of-words file saved in: " + args.bowFile);
+        }
+        else {
+            System.err.println("Problem found when writing: " + args.bowFile);
         }
     }
 
@@ -109,7 +120,7 @@ public class App {
     }
 
     private static void showTopWords(CommandTopWords args) {
-        FeatureSelection.displayTopWords(args.lexiconFile, args.numOfWords, args.sentiment, args.removeStopWords);
+        FeatureSelection.displayTopWords(args.lexiconFile, args.numOfWords, args.sentiment, !args.includeStopWords);
     }
 
     private static void showStats(CommandStats args) {
@@ -137,11 +148,17 @@ public class App {
     @Parameters(commandNames = "train", commandDescription = "Train a classifier model")
     private static class CommandTrain {
 
-        @Parameter(names = { "--document", "-d" }, description = "Training document")
+        @Parameter(names = { "--document", "-d" }, description = "Training document to use")
         private String trainDocFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
 
-        @Parameter(names = { "--model", "-m" }, description = "Classifier model file")
+        @Parameter(names = { "--bow"}, description = "Bag-of-words model file path output")
+        private String bowFile = BagOfWords.DEFAULT_EXCEL_NAME;
+
+        @Parameter(names = { "--model", "-m" }, description = "Classifier model file output")
         private String modelFile = NaiveBayesClassifier.DEFAULT_MODEL_FILE;
+
+        @Parameter(names = { "--feature", "-f" }, description = "Method to use for feature extraction")
+        private ExtractionScheme extractionScheme = ExtractionScheme.TO;
     }
 
     @Parameters(commandNames = "test", commandDescription = "Test created model and outputs a results excelfile")
@@ -150,8 +167,11 @@ public class App {
         @Parameter(names = { "--document", "-d" }, description = "Testing document")
         private String testDocFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
 
-        @Parameter(names = { "--model", "-m" }, description = "Classifier model file to use")
+        @Parameter(names = { "--model", "-m" }, description = "Classifier model file to use; uses this as default")
         private String modelFile = NaiveBayesClassifier.DEFAULT_MODEL_FILE;
+
+        @Parameter(names = { "--bow"}, description = "Bag-of-words model file path; uses this when specified")
+        private String bowFile = null;
 
         @Parameter(names = { "--result", "-r" }, description = "Path for the result file")
         private String resultDocFile = DocumentHelper.DEFAULT_TEST_RESULT_FILE;
@@ -183,18 +203,10 @@ public class App {
         @Parameter(names = "-n", description = "Number of words to show")
         private int numOfWords = 20;
 
-        @Parameter(names = { "--class",
-                "-c" }, description = "Sentiment classification", converter = SentimentConverter.class)
+        @Parameter(names = { "--class", "-c" }, description = "Sentiment classification")
         private Sentiment sentiment;
 
-        @Parameter(names = "--remove-stopwords", description = "Exclude stop words from frequencies")
-        private boolean removeStopWords = true;
-    }
-
-    private static class SentimentConverter implements IStringConverter<Sentiment> {
-        @Override
-        public Sentiment convert(String value) {
-            return Sentiment.valueOf(value.toUpperCase());
-        }
+        @Parameter(names = "--include-stopwords", description = "Include stop words from frequencies")
+        private boolean includeStopWords = false;
     }
 }
