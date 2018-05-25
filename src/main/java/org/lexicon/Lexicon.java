@@ -21,7 +21,7 @@ public class Lexicon {
     private Workbook workbook;
 
     public Lexicon() throws EncryptedDocumentException, InvalidFormatException, IOException {
-        workbook = WorkbookFactory.create(new File(DEFAULT_EXCEL_NAME));
+        this(DEFAULT_EXCEL_NAME);
     }
 
     public Lexicon(String filePath) throws EncryptedDocumentException, InvalidFormatException, IOException {

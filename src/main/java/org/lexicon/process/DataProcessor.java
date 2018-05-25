@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lexicon.process.dictionary.EnglishDictionary;
-import org.lexicon.process.stemmer.CebuanoStemmer;
 
 public class DataProcessor {
 
