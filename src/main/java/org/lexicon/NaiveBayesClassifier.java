@@ -190,7 +190,7 @@ public class NaiveBayesClassifier implements Serializable {
                     // System.out.println(tf);
                     totalTfidfByWordMap.get(word).put(sentiment, tfidf);
 
-                    double totalTfidf = (double) totalTfidfBySentimentMap.get(sentiment);
+                    double totalTfidf = totalTfidfBySentimentMap.get(sentiment);
                     totalTfidfBySentimentMap.put(sentiment, totalTfidf + tfidf);
                 }
                 bar.step();
@@ -248,7 +248,7 @@ public class NaiveBayesClassifier implements Serializable {
         return maxSentiment;
     }
 
-    public Map<AnnotatedText, Sentiment> test(Document testDocument) {
+    public TestResult test(Document testDocument) {
         Map<AnnotatedText, Sentiment> result = new LinkedHashMap<>();
         ProgressBar bar = new ProgressBar(testDocument.getData().size());
         for (AnnotatedText sentence : testDocument.getData()) {
@@ -256,7 +256,7 @@ public class NaiveBayesClassifier implements Serializable {
             result.put(sentence, prediction);
             bar.step();
         }
-        return result;
+        return new TestResult(result);
     }
 
     private int countWord(List<String> wordList, String wordToFind) {

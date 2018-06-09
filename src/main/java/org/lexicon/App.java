@@ -107,7 +107,7 @@ public class App {
         }
 
         System.out.println("Classifying data...");
-        Map<AnnotatedText, Sentiment> testResult = classifier.test(testingDocument);
+        TestResult testResult = classifier.test(testingDocument);
 
 
         System.out.println("Writing result file...");

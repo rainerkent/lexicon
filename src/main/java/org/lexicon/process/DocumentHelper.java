@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.lexicon.Sentiment;
+import org.lexicon.TestResult;
 import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
 import org.lexicon.util.WorkbookUtil;
@@ -59,7 +60,8 @@ public class DocumentHelper {
             return null;
         }
 
-        // adjustDocumentSize(document);
+        // Uncomment to hava an equal number of sentences for each classification
+        adjustDocumentSize(document);
         return document;
     }
 
@@ -125,7 +127,7 @@ public class DocumentHelper {
         }
     }
 
-    public static boolean writeTestResult(Map<AnnotatedText, Sentiment> testResult, String file) {
+    public static boolean writeTestResult(TestResult testResult, String file) {
         final String[] headers = { "Sentence", "Classification", "Prediction" };
 
         Workbook resultWb = new HSSFWorkbook();
@@ -148,7 +150,7 @@ public class DocumentHelper {
         totalSentimentMap.put(Sentiment.NEUTRAL, 0);
 
         int currentRowNum = 1;
-        for (Map.Entry<AnnotatedText, Sentiment> entry : testResult.entrySet()) {
+        for (Map.Entry<AnnotatedText, Sentiment> entry : testResult.getResultMap().entrySet()) {
             String sentence = entry.getKey().getText();
             Sentiment classification = entry.getKey().getCategory();
             Sentiment prediction = entry.getValue();
@@ -173,25 +175,19 @@ public class DocumentHelper {
 
         Row currentRow = sheet.createRow(currentRowNum++);
         currentRow.createCell(0).setCellValue("Accuracy:");
+        currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getAccuracy()));
 
         currentRow = sheet.createRow(currentRowNum++);
-        currentRow.createCell(0).setCellValue("Positive:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
-			(double) correctPredictionMap.get(Sentiment.POSITIVE) / totalSentimentMap.get(Sentiment.POSITIVE) * 100));
+        currentRow.createCell(0).setCellValue("Precision:");
+        currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getOverallPrecision()));
 
         currentRow = sheet.createRow(currentRowNum++);
-        currentRow.createCell(0).setCellValue("Negative:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
-			(double) correctPredictionMap.get(Sentiment.NEGATIVE) / totalSentimentMap.get(Sentiment.NEGATIVE) * 100));
+        currentRow.createCell(0).setCellValue("Recall:");
+        currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getOverallRecall()));
 
         currentRow = sheet.createRow(currentRowNum++);
-        currentRow.createCell(0).setCellValue("Neutral:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%",
-			(double) correctPredictionMap.get(Sentiment.NEUTRAL) / totalSentimentMap.get(Sentiment.NEUTRAL) * 100));
-
-        currentRow = sheet.createRow(currentRowNum++);
-        currentRow.createCell(0).setCellValue("Total:");
-        currentRow.createCell(1).setCellValue(String.format("%.2f%%", (double) correctPrediction / testResult.size() * 100));
+        currentRow.createCell(0).setCellValue("F-Measure:");
+        currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getFMeasure()));
 
         return WorkbookUtil.writeWorkbookToFile(resultWb, file);
     }
