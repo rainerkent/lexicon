@@ -170,7 +170,7 @@ public class App {
         @Parameter(names = { "--model", "-m" }, description = "Classifier model file to use; uses this as default")
         private String modelFile = NaiveBayesClassifier.DEFAULT_MODEL_FILE;
 
-        @Parameter(names = { "--bow"}, description = "Bag-of-words model file path; uses this when specified")
+        @Parameter(names = { "--bow" }, description = "Bag-of-words model file path; uses this when specified")
         private String bowFile = null;
 
         @Parameter(names = { "--result", "-r" }, description = "Path for the result file")

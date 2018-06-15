@@ -109,7 +109,6 @@ public class DocumentHelper {
     /**
      * Trims the size of the documents if there are size inequalities
      */
-    @SuppressWarnings("unused")
     private static void adjustDocumentSize(Map<Sentiment, List<AnnotatedText>> document) {
         // Get the minimum size for the three categories
         int minSize = Integer.MAX_VALUE;
