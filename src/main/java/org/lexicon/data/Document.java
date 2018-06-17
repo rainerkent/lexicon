@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.lexicon.Sentiment;
+import org.lexicon.process.ChiSquare;
 import org.lexicon.process.DataProcessor;
 import org.lexicon.util.ProgressBar;
 
@@ -64,6 +65,7 @@ public class Document implements Serializable {
     private void generateCache() {
         initializeCache();
         ProgressBar bar = new ProgressBar(sentences.size());
+        Map<String, Double> selectedFeatures = ChiSquare.selectFeatures(this);
         for (AnnotatedText sentence : sentences) {
             Sentiment sentiment = sentence.getCategory();
 
@@ -73,8 +75,12 @@ public class Document implements Serializable {
 
             // word list
             List<String> words = DataProcessor.preprocess(sentence.getText());
-            wordListMapCache.get(sentiment).addAll(words);
-            vocabularySetCache.addAll(words);
+            for (String word : words) {
+                if (selectedFeatures.get(word) != null) {
+                    wordListMapCache.get(sentiment).add(word);
+                    vocabularySetCache.add(word);
+                }
+            }
             bar.step();
         }
         cacheValid = true;
