@@ -26,7 +26,7 @@ public class DataProcessor {
 
         List<String> result = new ArrayList<>(50);
         for (String word : wordList) {
-            if (word.matches(".*\\d.*") || EnglishDictionary.isEnglishWord(word))
+            if (word.length() == 0 || !word.matches("^[a-zA-Z]*$") || EnglishDictionary.isEnglishWord(word))
                 continue;
 
             word = CebuanoNormalizer.normalize(word);

@@ -56,6 +56,7 @@ public class NaiveBayesClassifier implements Serializable {
             in.close();
         }
         catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
         return model;

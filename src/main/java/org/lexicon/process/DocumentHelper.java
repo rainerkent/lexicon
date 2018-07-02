@@ -111,18 +111,24 @@ public class DocumentHelper {
      */
     private static void adjustDocumentSize(Map<Sentiment, List<AnnotatedText>> document) {
         // Get the minimum size for the three categories
+        // System.out.println("Sizes:");
         int minSize = Integer.MAX_VALUE;
         for (Map.Entry<Sentiment, List<AnnotatedText>> entry : document.entrySet()) {
             int categoryDocSize = entry.getValue().size();
+            // System.out.println(entry.getKey() + ": " + categoryDocSize);
             if (minSize > categoryDocSize)
                 minSize = categoryDocSize;
         }
+
+        // System.out.println("Min Size:" + minSize);
+        // System.out.println("After trimming:");
 
         // Trim each document to minSize
         for (Map.Entry<Sentiment, List<AnnotatedText>> entry : document.entrySet()) {
             List<AnnotatedText> list = entry.getValue();
             if (list.size() > minSize)
-                entry.setValue(list.subList(0, minSize - 1));
+                entry.setValue(list.subList(0, minSize));
+            // System.out.println(entry.getKey() + ": " + entry.getValue().size());
         }
     }
 

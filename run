@@ -1,2 +1,17 @@
-mvn package -DskipTests &&
-java -jar target/lexicon.jar
+# mvn package -DskipTests &&
+# java -jar target/lexicon.jar train -f TO -m ./files/Model-TO.model &&
+# java -jar target/lexicon.jar train -f TF -m ./files/Model-TF.model &&
+# java -jar target/lexicon.jar train -f TFIDF -m ./files/Model-TFIDF.model &&
+# java -jar target/lexicon.jar test -m ./files/Model-TO.model -r ./files/TestResult-TO.xlsx &&
+# java -jar target/lexicon.jar test -m ./files/Model-TF.model -r ./files/TestResult-TF.xlsx &&
+# java -jar target/lexicon.jar test -m ./files/Model-TFIDF.model -r ./files/TestResult-TFIDF.xlsx &&
+
+# java -jar target/lexicon.jar train -f TO -m ./files/Model-TO-unbalanced.model &&
+# java -jar target/lexicon.jar train -f TF -m ./files/Model-TF-unbalanced.model &&
+# java -jar target/lexicon.jar train -f TFIDF -m ./files/Model-TFIDF-unbalanced.model &&
+java -jar target/lexicon.jar test -m ./files/Model-TO-unbalanced.model -r ./files/TestResult-TO-unbalanced.xlsx &&
+java -jar target/lexicon.jar test -m ./files/Model-TF-unbalanced.model -r ./files/TestResult-TF-unbalanced.xlsx &&
+java -jar target/lexicon.jar test -m ./files/Model-TFIDF-unbalanced.model -r ./files/TestResult-TFIDF-unbalanced.xlsx &&
+espeak "Finished testing"
+
+

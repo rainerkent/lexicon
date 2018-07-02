@@ -9,7 +9,7 @@ public class Tokenizer {
     private Tokenizer() {}
 
     public static List<String> tokenize(String sentence) {
-        String[] words = sentence.replaceAll("-", "")
+        String[] words = sentence.replaceAll("-", " ")
                 .replaceAll("\\p{P}", " ") // remove characters that are not non-alphanumeric and whitespaces(\s)
                 .trim()
                 .split("\\s+");            // split string in whitespaces

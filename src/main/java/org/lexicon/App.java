@@ -59,7 +59,7 @@ public class App {
         }
 
         long end = System.currentTimeMillis();
-        System.out.println(String.format("Program execution: %.2f secs", (end - start) / 1000.0));
+        System.out.printf("Program execution: %.2f secs\n", (end - start) / 1000.0);
     }
 
     private static void train(CommandTrain args) {
@@ -161,7 +161,7 @@ public class App {
         private ExtractionScheme extractionScheme = ExtractionScheme.TO;
     }
 
-    @Parameters(commandNames = "test", commandDescription = "Test created model and outputs a results excelfile")
+    @Parameters(commandNames = "test", commandDescription = "Test created model and writes results to an excel file")
     private static class CommandTest {
 
         @Parameter(names = { "--document", "-d" }, description = "Testing document")
