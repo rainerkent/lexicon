@@ -49,7 +49,7 @@ public class DocumentHelper {
                 Row currentRow = sheet.getRow(i);
                 if (currentRow != null) {
                     // System.out.println(i);
-                    String sentence = formatter.formatCellValue(currentRow.getCell(SENTENCE_COLUMN));
+                    String sentence = formatter.formatCellValue(currentRow.getCell(SENTENCE_COLUMN)).trim();
                     Sentiment sentiment = Sentiment
                             .getValue(formatter.formatCellValue(currentRow.getCell(CATEGORY_COLUMN)));
                     document.get(sentiment).add(new AnnotatedText(sentence, sentiment));

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lexicon.process.dictionary.EnglishDictionary;
+import org.lexicon.process.stemmer.CebuanoStemmer;
 
 public class DataProcessor {
 
@@ -38,18 +39,18 @@ public class DataProcessor {
             result.add(word);
         }
         // Remove English words
-//        wordList = EnglishDictionary.removeEnglishWords(wordList);
-//
-//        // Normalize words
-//        wordList = CebuanoNormalizer.normalize(wordList);
-//
-//        // Stemmer
-//        wordList = CebuanoStemmer.stemWords(wordList);
-//
-//        // Remove stop words
-//        if (removeStopWords) {
-//            wordList = StopWords.removeStopWords(wordList);
-//        }
+        // wordList = EnglishDictionary.removeEnglishWords(wordList);
+
+        // // Normalize words
+        // wordList = CebuanoNormalizer.normalize(wordList);
+
+        // // Stemmer
+        // wordList = CebuanoStemmer.stemWords(wordList);
+
+        // // Remove stop words
+        // if (removeStopWords) {
+        //     wordList = StopWords.removeStopWords(wordList);
+        // }
 
         return result;
     }

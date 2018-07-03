@@ -82,13 +82,13 @@ public class App {
             System.err.println("Problem found when writing: " + args.modelFile);
         }
 
-        System.out.println("Saving bag-of-words file...");
-        if (bow.writeFile(args.bowFile)) {
-            System.out.println("Bag-of-words file saved in: " + args.bowFile);
-        }
-        else {
-            System.err.println("Problem found when writing: " + args.bowFile);
-        }
+        // System.out.println("Saving bag-of-words file...");
+        // if (bow.writeFile(args.bowFile)) {
+        //     System.out.println("Bag-of-words file saved in: " + args.bowFile);
+        // }
+        // else {
+        //     System.err.println("Problem found when writing: " + args.bowFile);
+        // }
     }
 
     private static void test(CommandTest args) {

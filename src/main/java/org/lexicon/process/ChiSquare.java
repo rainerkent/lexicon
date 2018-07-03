@@ -8,8 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ChiSquare {
-
-    private static double chisquareCriticalValue = 10.83;
+    // 0.016
+    // 2.706
+    // df1 x2 0.050 3.841
+    private static double chisquareCriticalValue = 2.706;
 
     public static Map<String, Double> selectFeatures(Document dataset) {
         return selectFeatures(dataset, chisquareCriticalValue);
@@ -59,6 +61,7 @@ public class ChiSquare {
                 }
             }
         }
+        System.out.println("selectedFeatures size: " + selectedFeatures.size());
 
         return selectedFeatures;
     }
