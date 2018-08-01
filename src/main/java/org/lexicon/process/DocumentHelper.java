@@ -3,7 +3,7 @@ package org.lexicon.process;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,22 +33,20 @@ public class DocumentHelper {
     private DocumentHelper() {}
 
     public static Map<Sentiment, List<AnnotatedText>> loadDocument(String fileName) {
-        Map<Sentiment, List<AnnotatedText>> document = new HashMap<>();
+        Map<Sentiment, List<AnnotatedText>> document = new EnumMap<>(Sentiment.class);
 
         // Initialize ArrayLists
         document.put(Sentiment.NEGATIVE, new ArrayList<>());
         document.put(Sentiment.NEUTRAL, new ArrayList<>());
         document.put(Sentiment.POSITIVE, new ArrayList<>());
 
-        try {
-            Sheet sheet = WorkbookFactory.create(new File(fileName)).getSheetAt(0);
+        try (Workbook wb = WorkbookFactory.create(new File(fileName))){
+            Sheet sheet = wb.getSheetAt(0);
             DataFormatter formatter = new DataFormatter();
 
-            // System.out.println("Last RowNum: " + sheet.getLastRowNum());
             for (int i = 1; i <= sheet.getLastRowNum(); i++) { // Assume row0 is header
                 Row currentRow = sheet.getRow(i);
                 if (currentRow != null) {
-                    // System.out.println(i);
                     String sentence = formatter.formatCellValue(currentRow.getCell(SENTENCE_COLUMN)).trim();
                     Sentiment sentiment = Sentiment
                             .getValue(formatter.formatCellValue(currentRow.getCell(CATEGORY_COLUMN)));
@@ -60,7 +58,7 @@ public class DocumentHelper {
             return null;
         }
 
-        // Uncomment to hava an equal number of sentences for each classification
+        // Uncomment to have an equal number of sentences for each classification
         adjustDocumentSize(document);
         return document;
     }
@@ -111,24 +109,18 @@ public class DocumentHelper {
      */
     private static void adjustDocumentSize(Map<Sentiment, List<AnnotatedText>> document) {
         // Get the minimum size for the three categories
-        // System.out.println("Sizes:");
         int minSize = Integer.MAX_VALUE;
         for (Map.Entry<Sentiment, List<AnnotatedText>> entry : document.entrySet()) {
             int categoryDocSize = entry.getValue().size();
-            // System.out.println(entry.getKey() + ": " + categoryDocSize);
             if (minSize > categoryDocSize)
                 minSize = categoryDocSize;
         }
-
-        // System.out.println("Min Size:" + minSize);
-        // System.out.println("After trimming:");
 
         // Trim each document to minSize
         for (Map.Entry<Sentiment, List<AnnotatedText>> entry : document.entrySet()) {
             List<AnnotatedText> list = entry.getValue();
             if (list.size() > minSize)
                 entry.setValue(list.subList(0, minSize));
-            // System.out.println(entry.getKey() + ": " + entry.getValue().size());
         }
     }
 
@@ -144,12 +136,12 @@ public class DocumentHelper {
         }
 
         int correctPrediction = 0;
-        Map<Sentiment, Integer> correctPredictionMap = new HashMap<>();
+        Map<Sentiment, Integer> correctPredictionMap = new EnumMap<>(Sentiment.class);
         correctPredictionMap.put(Sentiment.POSITIVE, 0);
         correctPredictionMap.put(Sentiment.NEGATIVE, 0);
         correctPredictionMap.put(Sentiment.NEUTRAL, 0);
 
-        Map<Sentiment, Integer> totalSentimentMap = new HashMap<>();
+        Map<Sentiment, Integer> totalSentimentMap = new EnumMap<>(Sentiment.class);
         totalSentimentMap.put(Sentiment.POSITIVE, 0);
         totalSentimentMap.put(Sentiment.NEGATIVE, 0);
         totalSentimentMap.put(Sentiment.NEUTRAL, 0);
@@ -190,7 +182,7 @@ public class DocumentHelper {
         currentRow.createCell(0).setCellValue("Recall:");
         currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getOverallRecall()));
 
-        currentRow = sheet.createRow(currentRowNum++);
+        currentRow = sheet.createRow(currentRowNum);
         currentRow.createCell(0).setCellValue("F-Measure:");
         currentRow.createCell(1).setCellValue(String.format("%.4f", testResult.getFMeasure()));
 
