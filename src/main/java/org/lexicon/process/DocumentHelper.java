@@ -67,7 +67,7 @@ public class DocumentHelper {
      * @param fileName File path for the Training document
      * @return TrainingDocument or <code>null</code> if fileName is invalid
      */
-    public static Document loadTrainingDocument(String fileName) {
+    public static Document loadTrainingDocument(String fileName, boolean useFeatureSelection) {
         Map<Sentiment, List<AnnotatedText>> document = loadDocument(fileName);
 
         if (document != null) {
@@ -78,7 +78,7 @@ public class DocumentHelper {
                 int endIndex = Math.round(categoryDoc.size() * 0.7f) - 1;
                 trainingDoc.addAll(categoryDoc.subList(0, endIndex));
             }
-            return new Document(trainingDoc);
+            return new Document(trainingDoc, useFeatureSelection);
         }
         else {
             return null;
@@ -97,7 +97,7 @@ public class DocumentHelper {
                 testingDoc.addAll(categoryDoc.subList(startIndex, categoryDoc.size() - 1));
             }
 
-            return new Document(testingDoc);
+            return new Document(testingDoc, false);
         }
         else {
             return null;

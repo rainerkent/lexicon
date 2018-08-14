@@ -26,19 +26,26 @@ public class Document implements Serializable {
     private Map<Sentiment, List<String>> wordListMapCache;
 
     // Set of words found in the vocabulary
-    private Set<String> vocabularySetCache;
+    public Set<String> vocabularySetCache;
+
+    public boolean useFeatureSelection;
 
     private boolean cacheValid = false;
 
-    public Document(List<AnnotatedText> sentences) {
+    public Document(List<AnnotatedText> sentences, boolean useChiSquare) {
         if (sentences == null) {
             throw new NullPointerException();
         }
         this.sentences = sentences;
+        this.useFeatureSelection = useChiSquare;
     }
 
     public List<AnnotatedText> getData() {
         return sentences;
+    }
+
+    public void invalidateCache() {
+        cacheValid = false;
     }
 
     public Map<Sentiment, Integer> getSentenceCountMap() {
@@ -63,9 +70,13 @@ public class Document implements Serializable {
     }
 
     private void generateCache() {
-        initializeCache();
         ProgressBar bar = new ProgressBar(sentences.size());
-        Map<String, Double> selectedFeatures = ChiSquare.selectFeatures(this);
+        Map<String, Double> selectedFeatures = new HashMap<>();
+        if (useFeatureSelection) {
+            ChiSquare cs = new ChiSquare();
+            selectedFeatures = cs.selectFeatures(this);
+        }
+        initializeCache();
         for (AnnotatedText sentence : sentences) {
             Sentiment sentiment = sentence.getCategory();
 
@@ -76,7 +87,7 @@ public class Document implements Serializable {
             // word list
             List<String> words = DataProcessor.preprocess(sentence.getText());
             for (String word : words) {
-                if (selectedFeatures.get(word) != null) {
+                if (!useFeatureSelection || selectedFeatures.get(word) != null) {
                     wordListMapCache.get(sentiment).add(word);
                     vocabularySetCache.add(word);
                 }

@@ -70,7 +70,13 @@ public class App {
     }
 
     private static void train(CommandTrain args) {
-        Document trainingDocument = DocumentHelper.loadTrainingDocument(args.trainDocFile);
+        Document trainingDocument = DocumentHelper.loadTrainingDocument(args.trainDocFile, false);
+        if (args.useFeatureSelection) {
+            System.out.println("Selecting Features: ");
+            trainingDocument.getVocabulary();
+            trainingDocument.useFeatureSelection = true;
+            trainingDocument.invalidateCache();
+        }
         if (trainingDocument == null) {
             System.err.println("Problem found when reading: " + args.trainDocFile);
             return;
@@ -190,6 +196,9 @@ public class App {
 
         @Parameter(names = { "--feature", "-f" }, description = "Method to use for feature extraction")
         private ExtractionScheme extractionScheme = ExtractionScheme.TO;
+
+        @Parameter(names = { "--feature-selection", "-s" }, description = "Use feature selection", arity = 1)
+        private boolean useFeatureSelection = true;
     }
 
     @Parameters(commandNames = "test", commandDescription = "Test created model and writes results to an excel file")

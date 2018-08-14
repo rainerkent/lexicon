@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lexicon.process.dictionary.EnglishDictionary;
+import org.lexicon.process.stemmer.CebuanoStemmer;
 
 public class DataProcessor {
 
@@ -30,6 +31,7 @@ public class DataProcessor {
                 word = CebuanoNormalizer.normalize(word);
 
                 if (!removeStopWords || !StopWords.isStopWord(word)) {
+                    // word = CebuanoStemmer.getRootWord(word);
                     result.add(word);
                 }
             }
