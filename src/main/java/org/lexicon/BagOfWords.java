@@ -2,12 +2,24 @@ package org.lexicon;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
@@ -27,8 +39,8 @@ public class BagOfWords {
     private Map<String, Map<Sentiment, Integer>> wordCountMap = new TreeMap<>();
     private Map<String, Map<Sentiment, Double>> wordLikelihoodMap = new HashMap<>();
 
-    private Map<Sentiment, Integer> wordsBySentimentCountMap = new HashMap<>();
-    private Map<Sentiment, Integer> sentencesBySentimentCountMap = new HashMap<>();
+    private Map<Sentiment, Integer> wordsBySentimentCountMap = new EnumMap<>(Sentiment.class);
+    private Map<Sentiment, Integer> sentencesBySentimentCountMap = new EnumMap<>(Sentiment.class);
 
     public BagOfWords(Document document) {
         List<AnnotatedText> sentences = document.getData();
@@ -61,8 +73,8 @@ public class BagOfWords {
         for (currentRowNum = 2; currentRowNum < sheet.getLastRowNum() - 1; currentRowNum++) { // Start at 2, assume 0-1 is header
             Row currentRow = sheet.getRow(currentRowNum);
             String word = formatter.formatCellValue(currentRow.getCell(WORD_COLUMN));
-            Map<Sentiment, Integer> countMap = new HashMap<>();
-            Map<Sentiment, Double> likelihoodMap = new HashMap<>();
+            Map<Sentiment, Integer> countMap = new EnumMap<>(Sentiment.class);
+            Map<Sentiment, Double> likelihoodMap = new EnumMap<>(Sentiment.class);
 
             // Loop for every sentiment
             for (int i = 0; i < 3; i++) {
@@ -94,7 +106,7 @@ public class BagOfWords {
     private void calculateLikelihood() {
         for (Map.Entry<String, Map<Sentiment, Integer>> wordCountEntry : wordCountMap.entrySet()) {
             String word = wordCountEntry.getKey();
-            Map<Sentiment, Double> likelihoodMap = new HashMap<>();
+            Map<Sentiment, Double> likelihoodMap = new EnumMap<>(Sentiment.class);
 
             for (Sentiment sentiment : Sentiment.values()) {
                 int wordCount = wordCountEntry.getValue().get(sentiment);
@@ -196,7 +208,7 @@ public class BagOfWords {
     }
 
     private static Map<Sentiment, Integer> createCountMap(int pos, int neg, int neut) {
-        Map<Sentiment, Integer> countMap = new HashMap<>();
+        Map<Sentiment, Integer> countMap = new EnumMap<>(Sentiment.class);
         countMap.put(Sentiment.POSITIVE, pos);
         countMap.put(Sentiment.NEGATIVE, neg);
         countMap.put(Sentiment.NEUTRAL, neut);

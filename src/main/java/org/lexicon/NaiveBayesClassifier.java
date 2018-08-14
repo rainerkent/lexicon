@@ -80,6 +80,7 @@ public class NaiveBayesClassifier implements Serializable {
         System.out.println("Building vocabulary list...");
         vocabulary = trainingDocument.getVocabulary();
 
+        System.out.println("Vocabulary: " + vocabulary.size());
         System.out.println("Building knowledge base...");
         for (Sentiment sentiment : Sentiment.values()) {
             int docCountForClass = trainingDocument.getSentenceCountMap().get(sentiment);

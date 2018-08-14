@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lexicon.process.dictionary.EnglishDictionary;
+import org.lexicon.process.stemmer.CebuanoStemmer;
 
 public class DataProcessor {
 
@@ -26,30 +27,16 @@ public class DataProcessor {
 
         List<String> result = new ArrayList<>(50);
         for (String word : wordList) {
-            if (word.length() == 0 || !word.matches("^[a-zA-Z]*$") || EnglishDictionary.isEnglishWord(word))
-                continue;
+            if (word.length() != 0 && word.matches("^[a-zA-Z]*$") && !EnglishDictionary.isEnglishWord(word)) {
+                word = CebuanoNormalizer.normalize(word);
 
-            word = CebuanoNormalizer.normalize(word);
-            // word = CebuanoStemmer.getRootWord(word);
+                if (!removeStopWords || !StopWords.isStopWord(word)) {
+                    // word = CebuanoStemmer.getRootWord(word);
+                    result.add(word);
+                }
+            }
 
-            if (removeStopWords && StopWords.isStopWord(word))
-                continue;
-
-            result.add(word);
         }
-        // Remove English words
-//        wordList = EnglishDictionary.removeEnglishWords(wordList);
-//
-//        // Normalize words
-//        wordList = CebuanoNormalizer.normalize(wordList);
-//
-//        // Stemmer
-//        wordList = CebuanoStemmer.stemWords(wordList);
-//
-//        // Remove stop words
-//        if (removeStopWords) {
-//            wordList = StopWords.removeStopWords(wordList);
-//        }
 
         return result;
     }

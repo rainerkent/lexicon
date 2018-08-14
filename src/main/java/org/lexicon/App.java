@@ -1,16 +1,15 @@
 package org.lexicon;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+import java.io.IOException;
+
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
 import org.lexicon.process.DocumentHelper;
 
-import java.io.IOException;
-import java.util.Map;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
 public class App {
 
@@ -26,6 +25,7 @@ public class App {
         CommandTest cTest = new CommandTest();
         CommandStats cStats = new CommandStats();
         CommandTopWords cTopWords = new CommandTopWords();
+        CommandHappinessTest cHappinessTest = new CommandHappinessTest();
         JCommander jc = JCommander
             .newBuilder()
             .addObject(app)
@@ -34,6 +34,7 @@ public class App {
             .addCommand(cStats)
             .addCommand(cPopulate)
             .addCommand(cTopWords)
+            .addCommand(cHappinessTest)
             .build();
         jc.parse(args);
 
@@ -56,6 +57,12 @@ public class App {
             case "top-words":
                 showTopWords(cTopWords);
                 break;
+            case "happiness-index-test":
+                happinessIndexTest(cHappinessTest);
+                break;
+            default:
+                jc.usage();
+                break;
         }
 
         long end = System.currentTimeMillis();
@@ -63,13 +70,19 @@ public class App {
     }
 
     private static void train(CommandTrain args) {
-        Document trainingDocument = DocumentHelper.loadTrainingDocument(args.trainDocFile);
+        Document trainingDocument = DocumentHelper.loadTrainingDocument(args.trainDocFile, false);
+        if (args.useFeatureSelection) {
+            System.out.println("Selecting Features: ");
+            trainingDocument.getVocabulary();
+            trainingDocument.useFeatureSelection = true;
+            trainingDocument.invalidateCache();
+        }
         if (trainingDocument == null) {
             System.err.println("Problem found when reading: " + args.trainDocFile);
             return;
         }
 
-        BagOfWords bow = new BagOfWords(trainingDocument);
+        // BagOfWords bow = new BagOfWords(trainingDocument);
         NaiveBayesClassifier classifier = new NaiveBayesClassifier();
         classifier.train(trainingDocument, args.extractionScheme);
         System.out.println(classifier.getPriorMap());
@@ -82,13 +95,13 @@ public class App {
             System.err.println("Problem found when writing: " + args.modelFile);
         }
 
-        System.out.println("Saving bag-of-words file...");
-        if (bow.writeFile(args.bowFile)) {
-            System.out.println("Bag-of-words file saved in: " + args.bowFile);
-        }
-        else {
-            System.err.println("Problem found when writing: " + args.bowFile);
-        }
+        // System.out.println("Saving bag-of-words file...");
+        // if (bow.writeFile(args.bowFile)) {
+        //     System.out.println("Bag-of-words file saved in: " + args.bowFile);
+        // }
+        // else {
+        //     System.err.println("Problem found when writing: " + args.bowFile);
+        // }
     }
 
     private static void test(CommandTest args) {
@@ -145,6 +158,30 @@ public class App {
         }
     }
 
+    private static void happinessIndexTest(CommandHappinessTest args) {
+        System.out.println("Loading testing data...");
+        Document testingDocument = DocumentHelper.loadTestingDocument(args.testDocFile);
+        if (testingDocument == null) {
+            System.err.println("Problem found when reading: " + args.testDocFile);
+            return;
+        }
+
+        System.out.println("Loading lexicon...");
+        HappinessIndex hi = new HappinessIndex();
+        hi.load(args.lexiconFile);
+
+         System.out.println("Classifying data...");
+         TestResult testResult = hi.test(testingDocument, args.level);
+
+         System.out.println("Writing result file...");
+         if (DocumentHelper.writeTestResult(testResult, args.resultDocFile)) {
+             System.out.println("Test result file saved in: " + args.resultDocFile);
+         }
+         else {
+             System.err.println("Problem found when writing: " + args.resultDocFile);
+         }
+    }
+
     @Parameters(commandNames = "train", commandDescription = "Train a classifier model")
     private static class CommandTrain {
 
@@ -159,6 +196,9 @@ public class App {
 
         @Parameter(names = { "--feature", "-f" }, description = "Method to use for feature extraction")
         private ExtractionScheme extractionScheme = ExtractionScheme.TO;
+
+        @Parameter(names = { "--feature-selection", "-s" }, description = "Use feature selection", arity = 1)
+        private boolean useFeatureSelection = true;
     }
 
     @Parameters(commandNames = "test", commandDescription = "Test created model and writes results to an excel file")
@@ -205,6 +245,25 @@ public class App {
 
         @Parameter(names = { "--class", "-c" }, description = "Sentiment classification")
         private Sentiment sentiment;
+
+        @Parameter(names = "--include-stopwords", description = "Include stop words from frequencies")
+        private boolean includeStopWords = false;
+    }
+
+    @Parameters(commandNames = "happiness-index-test", commandDescription = "Test using Happiness Index / Corpus-based method")
+    private static class CommandHappinessTest {
+
+        @Parameter(names = { "--document", "-d" }, description = "Testing document")
+        private String testDocFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
+
+        @Parameter(names = { "--level" }, description = "Level")
+        private int level = 3;
+
+        @Parameter(names = { "--lexicon", "-x" }, description = "Lexicon File")
+        private String lexiconFile = "./files/Bisaya Lexicon.xls";
+
+        @Parameter(names = { "--result", "-r" }, description = "Path for the result file")
+        private String resultDocFile = DocumentHelper.DEFAULT_TEST_RESULT_FILE;
 
         @Parameter(names = "--include-stopwords", description = "Include stop words from frequencies")
         private boolean includeStopWords = false;
