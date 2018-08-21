@@ -63,6 +63,9 @@ public class DocumentHelper {
         return document;
     }
 
+    public static Document loadTrainingDocument(String fileName) {
+        return loadTrainingDocument(fileName, false);
+    }
     /**
      * @param fileName File path for the Training document
      * @return TrainingDocument or <code>null</code> if fileName is invalid

@@ -1,12 +1,21 @@
 package org.lexicon;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.lexicon.data.AnnotatedText;
 import org.lexicon.data.Document;
+import org.lexicon.process.ChiSquare;
 import org.lexicon.process.DocumentHelper;
 
+import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -26,6 +35,7 @@ public class App {
         CommandStats cStats = new CommandStats();
         CommandTopWords cTopWords = new CommandTopWords();
         CommandHappinessTest cHappinessTest = new CommandHappinessTest();
+        CommandChiSquareFeatureSelection cChiSquareFeatureSelection = new CommandChiSquareFeatureSelection();
         JCommander jc = JCommander
             .newBuilder()
             .addObject(app)
@@ -35,6 +45,7 @@ public class App {
             .addCommand(cPopulate)
             .addCommand(cTopWords)
             .addCommand(cHappinessTest)
+            .addCommand(cChiSquareFeatureSelection)
             .build();
         jc.parse(args);
 
@@ -60,6 +71,9 @@ public class App {
             case "happiness-index-test":
                 happinessIndexTest(cHappinessTest);
                 break;
+            case "cs-feature-select":
+                chiSquareFeatureSelect(cChiSquareFeatureSelection);
+                break;
             default:
                 jc.usage();
                 break;
@@ -82,7 +96,7 @@ public class App {
             return;
         }
 
-        // BagOfWords bow = new BagOfWords(trainingDocument);
+        BagOfWords bow = new BagOfWords(trainingDocument);
         NaiveBayesClassifier classifier = new NaiveBayesClassifier();
         classifier.train(trainingDocument, args.extractionScheme);
         System.out.println(classifier.getPriorMap());
@@ -95,13 +109,13 @@ public class App {
             System.err.println("Problem found when writing: " + args.modelFile);
         }
 
-        // System.out.println("Saving bag-of-words file...");
-        // if (bow.writeFile(args.bowFile)) {
-        //     System.out.println("Bag-of-words file saved in: " + args.bowFile);
-        // }
-        // else {
-        //     System.err.println("Problem found when writing: " + args.bowFile);
-        // }
+        System.out.println("Saving bag-of-words file...");
+        if (bow.writeFile(args.bowFile)) {
+            System.out.println("Bag-of-words file saved in: " + args.bowFile);
+        }
+        else {
+            System.err.println("Problem found when writing: " + args.bowFile);
+        }
     }
 
     private static void test(CommandTest args) {
@@ -171,7 +185,7 @@ public class App {
         hi.load(args.lexiconFile);
 
          System.out.println("Classifying data...");
-         TestResult testResult = hi.test(testingDocument, args.level);
+         TestResult testResult = hi.test(testingDocument, args.levels);
 
          System.out.println("Writing result file...");
          if (DocumentHelper.writeTestResult(testResult, args.resultDocFile)) {
@@ -180,6 +194,38 @@ public class App {
          else {
              System.err.println("Problem found when writing: " + args.resultDocFile);
          }
+    }
+
+    private static void chiSquareFeatureSelect(CommandChiSquareFeatureSelection args) {
+
+        System.out.println("Loading model...");
+        NaiveBayesClassifier classifier = NaiveBayesClassifier.loadModel(args.modelFile);
+        if (classifier == null) {
+            System.err.println("Problem found when reading: " + args.modelFile);
+            return;
+        }
+
+        ChiSquare cs = new ChiSquare();
+        Map<String, Double> selectedFeatures = cs.selectFeatures(classifier);
+        Set<String> newVocabulary = new HashSet(selectedFeatures.keySet());
+        Map<AnnotatedText, Double> newLikelihoodMap = new HashMap<>();
+
+        for (Map.Entry<AnnotatedText, Double> entry : classifier.getLikelihoodMap().entrySet()) {
+            String word = entry.getKey().getText();
+            if (selectedFeatures.containsKey(word)) {
+                newLikelihoodMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        classifier.setVocabulary(newVocabulary);
+        classifier.setLikelihoodMap(newLikelihoodMap);
+
+        System.out.println("Saving model file...");
+        if (classifier.writeModel(args.resultModelFile)) {
+            System.out.println("Model file saved in: " + args.resultModelFile);
+        }
+        else {
+            System.err.println("Problem found when writing: " + args.resultModelFile);
+        }
     }
 
     @Parameters(commandNames = "train", commandDescription = "Train a classifier model")
@@ -256,8 +302,12 @@ public class App {
         @Parameter(names = { "--document", "-d" }, description = "Testing document")
         private String testDocFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
 
-        @Parameter(names = { "--level" }, description = "Level")
-        private int level = 3;
+        @Parameter(names = { "--level" }, description = "Level", listConverter=IntegerListConverter.class)
+        private List<Integer> levels = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
 
         @Parameter(names = { "--lexicon", "-x" }, description = "Lexicon File")
         private String lexiconFile = "./files/Bisaya Lexicon.xls";
@@ -267,5 +317,28 @@ public class App {
 
         @Parameter(names = "--include-stopwords", description = "Include stop words from frequencies")
         private boolean includeStopWords = false;
+    }
+
+    @Parameters(commandNames = "cs-feature-select", commandDescription = "Use ChiSquare method to select features from a model")
+    private static class CommandChiSquareFeatureSelection {
+
+        @Parameter(names = { "--model", "-m" }, description = "Classifier model file to use; uses this as default")
+        private String modelFile = NaiveBayesClassifier.DEFAULT_MODEL_FILE;
+
+        @Parameter(names = { "--result", "-r" }, description = "Output for result model")
+        private String resultModelFile = "./files/classifies-cs-selected.model";
+
+    }
+
+    public static class IntegerListConverter implements IStringConverter<List<Integer>> {
+        @Override
+        public List<Integer> convert(String str) {
+            String [] numbers = str.split(",");
+            List<Integer> numList = new ArrayList<>();
+            for(String num : numbers){
+                numList.add(Integer.parseInt(num));
+            }
+            return numList;
+        }
     }
 }

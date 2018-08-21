@@ -33,18 +33,18 @@ public class HappinessIndex {
                 Row currentRow = sheet.getRow(i);
                 if (currentRow != null) {
                     String bisayaWord = formatter.formatCellValue(currentRow.getCell(2)).trim();
-                    
+
                     if (bisayaWord.length() != 0) {
                         LexiconWordDetail detail = lexiconWordMap.get(bisayaWord);
                         if (detail == null) {
                             detail = new LexiconWordDetail();
                         }
-                        
+
                         double[] wordScores = getRowScores(currentRow);
                         if (wordScores == null) {
                             wordScores = detail.scores;
                         }
-                        
+
                         detail.addScores(wordScores);
                         lexiconWordMap.put(bisayaWord, detail);
                     }
@@ -53,20 +53,20 @@ public class HappinessIndex {
         }
         catch (EncryptedDocumentException | InvalidFormatException | IOException e) {}
     }
-    
 
-    public TestResult test(Document testDocument, int level) {
+
+    public TestResult test(Document testDocument, List<Integer> levels) {
         Map<AnnotatedText, Sentiment> result = new LinkedHashMap<>();
         ProgressBar bar = new ProgressBar(testDocument.getData().size());
         for (AnnotatedText sentence : testDocument.getData()) {
-            Sentiment prediction = predict(sentence.getText(), level);
+            Sentiment prediction = predict(sentence.getText(), levels);
             result.put(sentence, prediction);
             bar.step();
         }
         return new TestResult(result);
     }
-        
-    private Sentiment predict(String sentence, int level) {
+
+    private Sentiment predict(String sentence, List<Integer> levels) {
         List<String> tokens = DataProcessor.preprocess(sentence);
 
         Sentiment maxSentiment = null;
@@ -74,19 +74,19 @@ public class HappinessIndex {
 
         for (Sentiment sentiment : Sentiment.values()) {
             double score = 0;
-            
+
             for (String token : tokens) {
                 if (lexiconWordMap.containsKey(token)) {
                     LexiconWordDetail detail = lexiconWordMap.get(token);
-                    
-                    if (sentiment == Sentiment.POSITIVE && detail.scores[0] > 5) {
-                        score += getScore(detail.scores, level);
+
+                    if (sentiment == Sentiment.POSITIVE && detail.scores[levels.get(0) - 1] > 5.5) {
+                        score += getScore(detail.scores, levels);
                     }
-                    else if (sentiment == Sentiment.NEGATIVE && detail.scores[0] < 5) {
-                        score += getScore(detail.scores, level);
+                    else if (sentiment == Sentiment.NEGATIVE && detail.scores[levels.get(0) - 1] < 4.5) {
+                        score += getScore(detail.scores, levels);
                     }
-                    else if (sentiment == Sentiment.NEUTRAL && detail.scores[0] == 5) {
-                        score += getScore(detail.scores, level);
+                    else if (sentiment == Sentiment.NEUTRAL && detail.scores[levels.get(0) - 1] >= 4.5 && detail.scores[levels.get(0) - 1] <= 5.5) {
+                        score += getScore(detail.scores, levels);
                     }
                 }
             }
@@ -115,18 +115,19 @@ public class HappinessIndex {
             return null;
         }
     }
-    
-    private double getScore(double[] scores, int level) {
-        if (level < 1) {
-            level = 1;
-        }
-        else if (level > 3) {
-            level = 3;
-        }
-        
+
+    private double getScore(double[] scores, List<Integer> levels) {
         double score = 0;
-        for (int n = 0; n < level; n++) {
-            score += scores[n];
+        for (Integer level : levels) {
+            level--;
+            if (level < 0) {
+                level = 0;
+            }
+            else if (level > 2) {
+                level = 2;
+            }
+
+            score += scores[level];
         }
         return score;
     }
@@ -134,7 +135,7 @@ public class HappinessIndex {
     private static class LexiconWordDetail {
         public int count = 0;
         public double[] scores =  { 0, 0, 0 };
-        
+
         public void addScores(double[] scores) {
             for (int i = 0; i < this.scores.length; i++) {
                 this.scores[i] = (this.scores[i] * count + scores[i]) / (count + 1);

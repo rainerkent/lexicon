@@ -48,6 +48,19 @@ public class NaiveBayesClassifier implements Serializable {
         return vocabulary;
     }
 
+
+    public void setPriorMap(Map<Sentiment, Double> newPriorMap) {
+        priorMap = newPriorMap;
+    }
+
+    public void setLikelihoodMap(Map<AnnotatedText, Double> newLikelihoodMap) {
+        likelihoodMap = newLikelihoodMap;
+    }
+
+    public void setVocabulary(Set<String> newVocabulary) {
+        vocabulary = newVocabulary;
+    }
+
     public static NaiveBayesClassifier loadModel(String file) {
         NaiveBayesClassifier model;
         try {
