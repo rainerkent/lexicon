@@ -36,6 +36,7 @@ public class App {
         CommandTopWords cTopWords = new CommandTopWords();
         CommandHappinessTest cHappinessTest = new CommandHappinessTest();
         CommandChiSquareFeatureSelection cChiSquareFeatureSelection = new CommandChiSquareFeatureSelection();
+        CommandIntersectionCount cIntersectionCount = new CommandIntersectionCount();
         JCommander jc = JCommander
             .newBuilder()
             .addObject(app)
@@ -46,6 +47,7 @@ public class App {
             .addCommand(cTopWords)
             .addCommand(cHappinessTest)
             .addCommand(cChiSquareFeatureSelection)
+            .addCommand(cIntersectionCount)
             .build();
         jc.parse(args);
 
@@ -73,6 +75,9 @@ public class App {
                 break;
             case "cs-feature-select":
                 chiSquareFeatureSelect(cChiSquareFeatureSelection);
+                break;
+            case "intersection-count":
+                intersectionCount(cIntersectionCount);
                 break;
             default:
                 jc.usage();
@@ -207,7 +212,7 @@ public class App {
 
         ChiSquare cs = new ChiSquare();
         Map<String, Double> selectedFeatures = cs.selectFeatures(classifier);
-        Set<String> newVocabulary = new HashSet(selectedFeatures.keySet());
+        Set<String> newVocabulary = new HashSet<>(selectedFeatures.keySet());
         Map<AnnotatedText, Double> newLikelihoodMap = new HashMap<>();
 
         for (Map.Entry<AnnotatedText, Double> entry : classifier.getLikelihoodMap().entrySet()) {
@@ -226,6 +231,18 @@ public class App {
         else {
             System.err.println("Problem found when writing: " + args.resultModelFile);
         }
+    }
+
+    private static void intersectionCount(CommandIntersectionCount args) {
+        Document document = DocumentHelper.loadTrainingDocument(args.docFile, false);
+        if (args.useFeatureSelection) {
+            System.out.println("Selecting Features: ");
+            document.getVocabulary();
+            document.useFeatureSelection = true;
+            document.invalidateCache();
+        }
+
+        document.exportIntersectionData(args.resultFile);
     }
 
     @Parameters(commandNames = "train", commandDescription = "Train a classifier model")
@@ -303,11 +320,12 @@ public class App {
         private String testDocFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
 
         @Parameter(names = { "--level" }, description = "Level", listConverter=IntegerListConverter.class)
-        private List<Integer> levels = new ArrayList<Integer>() {{
-            add(1);
-            add(2);
-            add(3);
-        }};
+        private List<Integer> levels = new ArrayList<>();
+        {
+            levels.add(1);
+            levels.add(2);
+            levels.add(3);
+        }
 
         @Parameter(names = { "--lexicon", "-x" }, description = "Lexicon File")
         private String lexiconFile = "./files/Bisaya Lexicon.xls";
@@ -327,6 +345,20 @@ public class App {
 
         @Parameter(names = { "--result", "-r" }, description = "Output for result model")
         private String resultModelFile = "./files/classifies-cs-selected.model";
+
+    }
+
+    @Parameters(commandNames = "intersection-count")
+    private static class CommandIntersectionCount {
+
+        @Parameter(names = { "--document", "-d" }, description = "Training document to use")
+        private String docFile = DocumentHelper.DEFAULT_DOCUMENT_FILE;
+
+        @Parameter(names = { "--feature-selection", "-s" }, description = "Use feature selection", arity = 1)
+        private boolean useFeatureSelection = true;
+
+        @Parameter(names = { "--result", "-r" }, description = "Path for the result file")
+        private String resultFile = "./files/IntersectionData.xlsx";
 
     }
 
